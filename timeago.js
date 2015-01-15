@@ -17,7 +17,8 @@
  *
  * Copyright (c) 2008-2011, Ryan McGeary (ryanonjavascript -[at]- mcgeary [*dot*] org)
  */
-module.exports = function (timestamp) {
+
+function timeago(timestamp) {
   if (timestamp instanceof Date) {
     return inWords(timestamp);
   } else if (typeof timestamp === "string") {
@@ -25,9 +26,9 @@ module.exports = function (timestamp) {
   } else if (typeof timestamp === "number") {
     return inWords(new Date(timestamp))
   }
-};
+}
 
-var settings = {
+timeago.settings = {
   allowFuture: false,
   strings: {
     prefixAgo: null,
@@ -49,17 +50,14 @@ var settings = {
   }
 };
 
-var $l = settings.strings;
-
-module.exports.settings = settings;
-
-$l.inWords = function (distanceMillis) {
-  var prefix = $l.prefixAgo;
-  var suffix = $l.suffixAgo;
-  if (settings.allowFuture) {
+function inWordsHelper(distanceMillis) {
+  var strings = timeago.settings.strings;
+  var prefix = strings.prefixAgo;
+  var suffix = strings.suffixAgo;
+  if (timeago.settings.allowFuture) {
     if (distanceMillis < 0) {
-      prefix = $l.prefixFromNow;
-      suffix = $l.suffixFromNow;
+      prefix = strings.prefixFromNow;
+      suffix = strings.suffixFromNow;
     }
   }
 
@@ -69,43 +67,43 @@ $l.inWords = function (distanceMillis) {
   var days = hours / 24;
   var years = days / 365;
 
-  function substitute (stringOrFunction, number) {
+  function substitute(stringOrFunction, number) {
     var string = typeof stringOrFunction === 'function' ? stringOrFunction(number, distanceMillis) : stringOrFunction;
-    var value = ($l.numbers && $l.numbers[number]) || number;
+    var value = (strings.numbers && strings.numbers[number]) || number;
     return string.replace(/%d/i, value);
   }
 
-  var words = seconds < 45 && substitute($l.seconds, Math.round(seconds)) ||
-    seconds < 90 && substitute($l.minute, 1) ||
-    minutes < 45 && substitute($l.minutes, Math.round(minutes)) ||
-    minutes < 90 && substitute($l.hour, 1) ||
-    hours < 24 && substitute($l.hours, Math.round(hours)) ||
-    hours < 48 && substitute($l.day, 1) ||
-    days < 30 && substitute($l.days, Math.floor(days)) ||
-    days < 60 && substitute($l.month, 1) ||
-    days < 365 && substitute($l.months, Math.floor(days / 30)) ||
-    years < 2 && substitute($l.year, 1) ||
-    substitute($l.years, Math.floor(years));
+  var words = seconds < 45 && substitute(strings.seconds, Math.round(seconds)) ||
+    seconds < 90 && substitute(strings.minute, 1) ||
+    minutes < 45 && substitute(strings.minutes, Math.round(minutes)) ||
+    minutes < 90 && substitute(strings.hour, 1) ||
+    hours < 24 && substitute(strings.hours, Math.round(hours)) ||
+    hours < 48 && substitute(strings.day, 1) ||
+    days < 30 && substitute(strings.days, Math.floor(days)) ||
+    days < 60 && substitute(strings.month, 1) ||
+    days < 365 && substitute(strings.months, Math.floor(days / 30)) ||
+    years < 2 && substitute(strings.year, 1) ||
+    substitute(strings.years, Math.floor(years));
 
   return [prefix, words, suffix].join(" ").toString().trim();
-};
+}
 
-function parse (iso8601) {
+function parse(iso8601) {
   if (!iso8601) return;
   var s = iso8601.trim();
-  s = s.replace(/\.\d\d\d+/,""); // remove milliseconds
-  s = s.replace(/-/,"/").replace(/-/,"/");
-  s = s.replace(/T/," ").replace(/Z/," UTC");
-  s = s.replace(/([\+\-]\d\d)\:?(\d\d)/," $1$2"); // -04:00 -> -0400
+  s = s.replace(/\.\d\d\d+/, ""); // remove milliseconds
+  s = s.replace(/-/, "/").replace(/-/, "/");
+  s = s.replace(/T/, " ").replace(/Z/, " UTC");
+  s = s.replace(/([\+\-]\d\d)\:?(\d\d)/, " $1$2"); // -04:00 -> -0400
   return new Date(s);
 }
 
-$l.parse = parse;
-
-function inWords (date) {
-  return $l.inWords(distance(date));
+function inWords(date) {
+  return inWordsHelper(distance(date));
 }
 
-function distance (date) {
+function distance(date) {
   return (new Date().getTime() - date.getTime());
 }
+
+module.exports = timeago;
